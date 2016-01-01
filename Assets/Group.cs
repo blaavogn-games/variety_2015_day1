@@ -2,11 +2,10 @@
 
 public class Group
 {
-    public List<Coord> beneath, all;
-    public bool stuck = false;
+    public List<Coord> beneath = new List<Coord>(), top = new List<Coord>(), all = new List<Coord>();
 }
 
-public struct Coord
+public class Coord
 {
     public int x, y;
 

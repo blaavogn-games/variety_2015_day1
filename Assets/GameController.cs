@@ -12,7 +12,7 @@ public class GameController : MonoBehaviour {
     float time = 0.5f, timeDelay = 0.5f;
     bool groupsCreated = false;
 
-    private List<Group> grps;
+    private List<Group> grps = new List<Group>();
     bool[,] grped;
 
     int[,] arr = 
@@ -26,8 +26,8 @@ public class GameController : MonoBehaviour {
                      { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-                     { 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0 },
-                     { 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0 }};
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }};
     
     GameObject[,] arrGo = new GameObject[12, 16];
     
@@ -95,10 +95,11 @@ public class GameController : MonoBehaviour {
         {
             for (int x = 0; x < 16; x++)
             {
-                if(arrGo[y, x].tag == "tile" && !grped[y, x])
+                if(arrGo[y, x] != null && arrGo[y, x].tag == "tile" && !grped[y, x])
                 {
                     Group g = new Group();
                     grps.Add(g);
+                    Debug.Log("Adding: " + x + " , " + y);
                     addToGroup(g, x, y);
                 }
             }
@@ -107,32 +108,32 @@ public class GameController : MonoBehaviour {
 
     void addToGroup(Group g, int x, int y)
     {
-        g.all.Add(new Coord(x,y));
+        Coord c = new Coord(x, y);
+        g.all.Add(c);
         grped[y, x] = true;
 
-        if (11 - y == 0) {
-            g.stuck = true;
-        }
-        else if (arrGo[y - 1, x].tag == "tile" && !grped[y - 1, x])
+        if (y != 0 && arrGo[y - 1, x] != null && arrGo[y - 1, x].tag == "tile" && !grped[y - 1, x])
         {
             addToGroup(g, x, y - 1);
-        }
-        else if(arrGo[y - 1, x].tag != "tile")
-        {
-            g.beneath.Add(new Coord(x, y));
+            
         }
 
-        if (y+1 < 12 && arrGo[y + 1, x].tag == "tile" && !grped[y + 1, x])
+        if (y == 0 || arrGo[y - 1, x] == null || arrGo[y - 1, x] != null && arrGo[y - 1, x].tag != "tile")
+        {
+            g.beneath.Add(c);
+        }
+
+        if (y+1 < 12 && arrGo[y + 1, x] != null && arrGo[y + 1, x].tag == "tile" && !grped[y + 1, x])
         {
             addToGroup(g, x, y + 1);
         }
-
-        if (x + 1 < 16 && arrGo[y, x + 1].tag == "tile" && !grped[y, x + 1])
+        
+        if (x + 1 < 16 && arrGo[y, x + 1] != null && arrGo[y, x + 1].tag == "tile" && !grped[y, x + 1])
         {
             addToGroup(g, x + 1, y);
         }
 
-        if (x - 1 > -1 && arrGo[y, x - 1].tag == "tile" && !grped[y, x - 1])
+        if (x - 1 > -1 && arrGo[y, x - 1] != null && arrGo[y, x - 1].tag == "tile" && !grped[y, x - 1])
         {
             addToGroup(g, x - 1, y);
         }
@@ -145,6 +146,66 @@ public class GameController : MonoBehaviour {
         {
             createGroups();
             groupsCreated = true;
+            Debug.Log(grps.Count);
+        }
+
+        time -= Time.deltaTime;
+        if (time < 0)
+        {
+            time = timeDelay;
+            GameObject[,] newArrGo = new GameObject[12, 16];
+
+            for (int y = 0; y < 12; y++)
+            {
+                for (int x = 0; x < 16; x++)
+                {
+                    if (arrGo[y, x] != null && arrGo[y, x].tag != "tile") { 
+                        newArrGo[y, x] = arrGo[y, x];
+                    }
+                }
+            }
+
+            bool anyFalling = false;
+            foreach (Group g in grps)
+            {
+                bool falling = true;
+                foreach(Coord c in g.beneath)
+                {
+                    if (c.y == 0 || (arrGo[c.y - 1, c.x] != null && 
+                                   arrGo[c.y - 1, c.x].tag != "tile" &&
+                                   arrGo[c.y - 1, c.x].tag != "goal"))
+                    {
+                        falling = false;
+                        break;
+                    }
+                }
+
+                if (falling)
+                {
+                    anyFalling = true;
+                    for (int i = 0; i < g.all.Count; i++)
+                    {
+                        newArrGo[g.all[i].y - 1, g.all[i].x] = arrGo[g.all[i].y, g.all[i].x];
+                        newArrGo[g.all[i].y - 1, g.all[i].x].transform.Translate(0, -1, 0);
+                        g.all[i].y = g.all[i].y-1;
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < g.all.Count; i++)
+                    {
+                        newArrGo[g.all[i].y - 1, g.all[i].x] = arrGo[g.all[i].y, g.all[i].x];
+                        newArrGo[g.all[i].y - 1, g.all[i].x].transform.Translate(0, -1, 0);
+                        g.all[i].y = g.all[i].y - 1;
+                    }
+                }
+            }
+            arrGo = newArrGo;
+            if (!anyFalling)
+            {
+                groupsCreated = false;
+                st = state.walking;
+            }
         }
     }
 
