@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 public enum state { walking, groundFalling, falling, jumping }
 
@@ -8,14 +9,15 @@ public class GameController : MonoBehaviour {
     public GameObject goPlayer, goSpike, goSpikeDouble, goGoal, goTile;
     private int plx, ply;
     int steps = 4, stepsLeft = 4;
+    int jumps = 1, jumpsLeft = 1;
     state st = state.walking;
-    float time = 0.5f, timeDelay = 0.5f;
+    float time = 0.1f, timeDelay = 0.1f;
     bool groupsCreated = false;
 
     private List<Group> grps = new List<Group>();
     bool[,] grped;
 
-    int[,] arr = 
+    int[][,] arrs = { 
         new int[,] { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -27,11 +29,70 @@ public class GameController : MonoBehaviour {
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }};
-    
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }},
+
+        new int[,] { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 5 }},
+
+        new int[,] { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 5 }},
+
+        new int[,] { { 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 3, 0, 0, 4, 3, 3, 3, 3, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 3, 3, 3, 3, 0, 0, 0, 3, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 3, 0, 0, 0, 3, 3, 3, 3, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 3, 3, 3, 3, 0, 0, 0, 3, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 }},
+
+        new int[,] { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 3, 3, 3, 0, 3, 0, 0, 3, 0, 3, 3, 0, 0, 0 },
+                     { 0, 0, 3, 0, 0, 0, 3, 0, 0, 3, 0, 3, 0, 3, 0, 0 },
+                     { 0, 0, 3, 0, 0, 0, 3, 3, 0, 3, 0, 3, 0, 3, 0, 0 },
+                     { 0, 0, 3, 3, 0, 0, 3, 0, 3, 3, 0, 3, 0, 3, 0, 0 },
+                     { 0, 0, 3, 0, 0, 0, 3, 0, 0, 3, 0, 3, 0, 3, 0, 0 },
+                     { 0, 0, 3, 0, 0, 0, 3, 0, 0, 3, 0, 3, 0, 3, 0, 0 },
+                     { 0, 0, 3, 3, 3, 0, 3, 0, 0, 3, 0, 3, 3, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 }}
+        };
+    int[,] arr;
     GameObject[,] arrGo = new GameObject[12, 16];
-    
-    void Start () {
+
+    void Start() {
+        if (!PlayerPrefs.HasKey("lvl"))
+        {
+            PlayerPrefs.SetInt("lvl", 0);
+        }
+        arr = arrs[PlayerPrefs.GetInt("lvl")];
+
 	    for(int y = 0; y < 12; y++)
         {
             for(int x = 0; x < 16; x++)
@@ -80,12 +141,7 @@ public class GameController : MonoBehaviour {
                 break;
         }
     }
-
-    void Jumping()
-    {
-        st = state.walking;
-    }
-
+    
     void createGroups()
     {
         grps.Clear();
@@ -99,7 +155,6 @@ public class GameController : MonoBehaviour {
                 {
                     Group g = new Group();
                     grps.Add(g);
-                    Debug.Log("Adding: " + x + " , " + y);
                     addToGroup(g, x, y);
                 }
             }
@@ -146,7 +201,6 @@ public class GameController : MonoBehaviour {
         {
             createGroups();
             groupsCreated = true;
-            Debug.Log(grps.Count);
         }
 
         time -= Time.deltaTime;
@@ -171,9 +225,10 @@ public class GameController : MonoBehaviour {
                 bool falling = true;
                 foreach(Coord c in g.beneath)
                 {
-                    if (c.y == 0 || (arrGo[c.y - 1, c.x] != null && 
-                                   arrGo[c.y - 1, c.x].tag != "tile" &&
-                                   arrGo[c.y - 1, c.x].tag != "goal"))
+                    if (c.y == 0 || (arrGo[c.y - 1, c.x] != null &&( 
+                                   arrGo[c.y - 1, c.x].tag == "tile" ||
+                                   arrGo[c.y - 1, c.x].tag == "goal" ||
+                                   arrGo[c.y - 1, c.x].tag == "Player")))
                     {
                         falling = false;
                         break;
@@ -185,18 +240,24 @@ public class GameController : MonoBehaviour {
                     anyFalling = true;
                     for (int i = 0; i < g.all.Count; i++)
                     {
-                        newArrGo[g.all[i].y - 1, g.all[i].x] = arrGo[g.all[i].y, g.all[i].x];
-                        newArrGo[g.all[i].y - 1, g.all[i].x].transform.Translate(0, -1, 0);
-                        g.all[i].y = g.all[i].y-1;
+                        if(arrGo[g.all[i].y - 1, g.all[i].x] != null && arrGo[g.all[i].y - 1, g.all[i].x].tag == "enemy")
+                        {
+                            Destroy(arrGo[g.all[i].y, g.all[i].x]);
+                            arrGo[g.all[i].y, g.all[i].x] = null;
+                            groupsCreated = false;
+                        }
+                        else { 
+                            newArrGo[g.all[i].y - 1, g.all[i].x] = arrGo[g.all[i].y, g.all[i].x];
+                            newArrGo[g.all[i].y - 1, g.all[i].x].transform.Translate(0, -1, 0);
+                            g.all[i].y = g.all[i].y-1;
+                        }
                     }
                 }
                 else
                 {
                     for (int i = 0; i < g.all.Count; i++)
                     {
-                        newArrGo[g.all[i].y - 1, g.all[i].x] = arrGo[g.all[i].y, g.all[i].x];
-                        newArrGo[g.all[i].y - 1, g.all[i].x].transform.Translate(0, -1, 0);
-                        g.all[i].y = g.all[i].y - 1;
+                        newArrGo[g.all[i].y, g.all[i].x] = arrGo[g.all[i].y, g.all[i].x];
                     }
                 }
             }
@@ -204,7 +265,7 @@ public class GameController : MonoBehaviour {
             if (!anyFalling)
             {
                 groupsCreated = false;
-                st = state.walking;
+                st = state.falling;
             }
         }
     }
@@ -233,7 +294,13 @@ public class GameController : MonoBehaviour {
 
                 if (cur.tag == "goal")
                 {
-                    Debug.Log("Success");
+                    PlayerPrefs.SetInt("lvl", PlayerPrefs.GetInt("lvl") + 1);
+                    SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                }
+
+                if (cur.tag == "enemy")
+                {
+                    SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 }
             }
 
@@ -241,6 +308,50 @@ public class GameController : MonoBehaviour {
             pl.transform.Translate(0, -1, 0);
             arrGo[ply, plx] = null;
             ply--;
+            arrGo[ply, plx] = pl;
+        }
+    }
+
+    void Jumping()
+    {
+        time -= Time.deltaTime;
+        if (time < 0)
+        {
+            time = timeDelay;
+            if (ply + 1 == 12 || jumpsLeft == 0)
+            {
+                jumpsLeft = jumps;
+                st = state.walking;
+                return;
+            }
+
+            jumpsLeft--;
+            GameObject cur = arrGo[ply + 1, plx];
+
+            if (cur != null)
+            {
+                if (cur.tag == "tile")
+                {
+                    st = state.walking;
+                    return;
+                }
+
+                if (cur.tag == "goal")
+                {
+                    PlayerPrefs.SetInt("lvl", PlayerPrefs.GetInt("lvl") + 1);
+                    SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                }
+
+                if (cur.tag == "enemy")
+                {
+                    SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                }
+            }
+
+            GameObject pl = arrGo[ply, plx];
+            pl.transform.Translate(0, 1, 0);
+            arrGo[ply, plx] = null;
+            ply++;
             arrGo[ply, plx] = pl;
         }
     }
@@ -263,6 +374,21 @@ public class GameController : MonoBehaviour {
         {
             move(0, -1);
         }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            PlayerPrefs.SetInt("lvl", 0);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            PlayerPrefs.SetInt("lvl", PlayerPrefs.GetInt("lvl") + 1);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+
     }
 
     void move(int dx, int dy)
@@ -278,8 +404,15 @@ public class GameController : MonoBehaviour {
             if (cur.tag == "tile")
                 return;
 
-            if (cur.tag == "goal") {
-                Debug.Log("Success");
+            if (cur.tag == "goal")
+            {
+                PlayerPrefs.SetInt("lvl", PlayerPrefs.GetInt("lvl") + 1);
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            }
+            
+            if (cur.tag == "enemy")
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
         }
 
