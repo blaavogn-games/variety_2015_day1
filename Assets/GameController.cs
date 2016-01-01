@@ -7,12 +7,15 @@ public enum state { walking, groundFalling, falling, jumping }
 
 public class GameController : MonoBehaviour {
     public GameObject goPlayer, goSpike, goSpikeDouble, goGoal, goTile;
+    public AudioClip walk, ground, die, win, jump;
     private int plx, ply;
     int steps = 4, stepsLeft = 4;
     int jumps = 1, jumpsLeft = 1;
     state st = state.walking;
     float time = 0.1f, timeDelay = 0.1f;
     bool groupsCreated = false;
+
+    AudioSource audioS;
 
     private List<Group> grps = new List<Group>();
     bool[,] grped;
@@ -63,9 +66,9 @@ public class GameController : MonoBehaviour {
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0 },
-                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 }},
 
@@ -102,8 +105,8 @@ public class GameController : MonoBehaviour {
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-                     { 4, 0, 0, 0, 0, 1, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0 },
-                     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0 },
+                     { 4, 0, 0, 0, 0, 1, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0 },
+                     { 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 3, 3, 3, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0 },
                      { 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 5, 0, 0, 0, 0, 0 },
                      { 2, 2, 2, 2, 2, 2, 2, 2, 5, 2, 2, 5, 2, 2, 5, 2, 2 }},
@@ -142,8 +145,9 @@ public class GameController : MonoBehaviour {
         {
             PlayerPrefs.SetInt("lvl", 0);
         }
+        audioS = GetComponent<AudioSource>();
         arr = arrs[PlayerPrefs.GetInt("lvl")];
-
+        
 	    for(int y = 0; y < 12; y++)
         {
             for(int x = 0; x < 16; x++)
@@ -289,6 +293,7 @@ public class GameController : MonoBehaviour {
                 if (falling)
                 {
                     anyFalling = true;
+                    audioS.PlayOneShot(ground);
                     for (int i = 0; i < g.all.Count; i++)
                     {
                         if(arrGo[g.all[i].y - 1, g.all[i].x] != null && arrGo[g.all[i].y - 1, g.all[i].x].tag == "enemy")
@@ -345,12 +350,14 @@ public class GameController : MonoBehaviour {
 
                 if (cur.tag == "goal")
                 {
+                    audioS.PlayOneShot(win);
                     PlayerPrefs.SetInt("lvl", PlayerPrefs.GetInt("lvl") + 1);
                     SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 }
 
                 if (cur.tag == "enemy")
                 {
+                    audioS.PlayOneShot(die);
                     SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 }
             }
@@ -389,15 +396,18 @@ public class GameController : MonoBehaviour {
 
                 if (cur.tag == "goal")
                 {
+                    audioS.PlayOneShot(win);
                     PlayerPrefs.SetInt("lvl", PlayerPrefs.GetInt("lvl") + 1);
                     SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 }
 
                 if (cur.tag == "enemy")
                 {
+                    audioS.PlayOneShot(die);
                     SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 }
             }
+            audioS.PlayOneShot(jump);
 
             GameObject pl = arrGo[ply, plx];
             pl.transform.Translate(0, 1, 0);
@@ -457,12 +467,14 @@ public class GameController : MonoBehaviour {
 
             if (cur.tag == "goal")
             {
+                audioS.PlayOneShot(win);
                 PlayerPrefs.SetInt("lvl", PlayerPrefs.GetInt("lvl") + 1);
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
             
             if (cur.tag == "enemy")
             {
+                audioS.PlayOneShot(die);
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
         }
@@ -474,6 +486,7 @@ public class GameController : MonoBehaviour {
         ply += dy;
         arrGo[ply, plx] = pl;
         stepsLeft--;
+        audioS.PlayOneShot(walk);
 
         if (stepsLeft == 0)
         {
